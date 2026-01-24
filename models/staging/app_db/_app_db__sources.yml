@@ -1,0 +1,36 @@
+version: 2
+
+sources:
+  - name: app_db
+    description: Application database (PostgreSQL replica)
+    database: dev  # DuckDB database
+    schema: raw
+    freshness:
+      warn_after: { count: 24, period: hour }
+      error_after: { count: 48, period: hour }
+    loaded_at_field: loaded_at
+
+    tables:
+      - name: users
+        description: User accounts and profiles
+        columns:
+          - name: id
+            description: Primary key
+            data_tests:
+              - unique
+              - not_null
+
+          - name: email
+            description: User email address
+            data_tests:
+              - unique
+              - not_null
+
+      - name: subscriptions
+        description: User subscription records
+        columns:
+          - name: id
+            description: Primary key
+            data_tests:
+              - unique
+              - not_null

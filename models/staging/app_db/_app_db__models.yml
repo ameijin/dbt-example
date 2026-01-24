@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: stg_app_db__users
+    description: Cleaned user data from application database
+
+    columns:
+      - name: user_id
+        description: Primary key
+        data_tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: User email (lowercase)
+        data_tests:
+          - not_null
+
+      - name: account_status
+        description: Current account status
+        data_tests:
+          - accepted_values:
+              values: [ 'active', 'inactive', 'churned', 'suspended' ]
+
+      - name: is_active_user
+        description: Boolean flag for active users
+        data_tests:
+          - not_null
+
+  - name: stg_app_db__subscriptions
+    description: Cleaned subscription data with pricing conversions
+
+    columns:
+      - name: subscription_id
+        data_tests:
+          - unique
+          - not_null
+
+      - name: user_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('stg_app_db__users')
+              field: user_id
+
+      - name: product
+        data_tests:
+          - accepted_values:
+              values: [ 'cloudsync', 'teamchat', 'datahub' ]
+
+      - name: monthly_amount
+        data_tests:
+          - not_null
