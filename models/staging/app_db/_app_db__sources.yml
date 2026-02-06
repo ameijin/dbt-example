@@ -3,8 +3,8 @@ version: 2
 sources:
   - name: app_db
     description: Application database (PostgreSQL replica)
-    database: dev  # DuckDB database
-    schema: raw
+    meta:
+      external_location: "data/{name}.parquet"
     freshness:
       warn_after: { count: 24, period: hour }
       error_after: { count: 48, period: hour }
@@ -28,6 +28,15 @@ sources:
 
       - name: subscriptions
         description: User subscription records
+        columns:
+          - name: id
+            description: Primary key
+            data_tests:
+              - unique
+              - not_null
+
+      - name: usage_events
+        description: Product usage event stream
         columns:
           - name: id
             description: Primary key

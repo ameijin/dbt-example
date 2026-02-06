@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_segment__tracks
+    description: Cleaned Segment track events
+    columns:
+      - name: track_id
+        data_tests:
+          - unique
+          - not_null
+      - name: event_name
+        data_tests:
+          - not_null
+
+  - name: stg_segment__identifies
+    description: Cleaned Segment identify events
+    columns:
+      - name: identify_id
+        data_tests:
+          - unique
+          - not_null

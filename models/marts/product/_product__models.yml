@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: User dimension with engagement metrics
+    columns:
+      - name: user_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_events
+    description: Fact table of all product usage events
+    columns:
+      - name: event_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_user_engagement_daily
+    description: Daily user engagement metrics per product
+    columns:
+      - name: engagement_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: rpt_feature_adoption
+    description: Feature adoption report by product and plan

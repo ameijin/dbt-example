@@ -1,0 +1,32 @@
+version: 2
+
+exposures:
+  - name: executive_revenue_dashboard
+    type: dashboard
+    description: >
+      Executive dashboard showing MRR trends, revenue breakdown by product,
+      customer acquisition costs, and churn metrics. Updated daily.
+    owner:
+      name: Finance Team
+      email: finance@techflow.io
+    depends_on:
+      - ref('fct_mrr_daily')
+      - ref('fct_revenue')
+      - ref('dim_customers')
+      - ref('dim_subscriptions')
+    tags: ['finance', 'executive']
+
+  - name: churn_prediction_model
+    type: ml
+    description: >
+      ML model that predicts customer churn probability based on
+      engagement metrics, subscription events, and payment history.
+    owner:
+      name: Data Science Team
+      email: datascience@techflow.io
+    depends_on:
+      - ref('dim_customers')
+      - ref('fct_subscription_events')
+      - ref('fct_user_engagement_daily')
+      - ref('dim_subscriptions')
+    tags: ['ml', 'churn']

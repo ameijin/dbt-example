@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: salesforce
+    description: Salesforce CRM data
+    meta:
+      external_location: "data/salesforce_{name}.parquet"
+    freshness:
+      warn_after: { count: 24, period: hour }
+      error_after: { count: 48, period: hour }
+    loaded_at_field: loaded_at
+
+    tables:
+      - name: accounts
+        description: Salesforce account records
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: opportunities
+        description: Salesforce opportunity records
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null

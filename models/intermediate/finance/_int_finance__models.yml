@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: int_subscription_events
+    description: >
+      Timeline of subscription lifecycle events (new, upgrade, downgrade,
+      cancel, reactivate) with MRR at each point.
+
+  - name: int_daily_mrr_changes
+    description: >
+      Gap-free daily MRR series with categorization of changes into
+      new, expansion, contraction, and churn buckets.
+
+  - name: int_revenue_attribution
+    description: >
+      Revenue attributed to acquisition channels via the
+      utm_channel_mapping seed.

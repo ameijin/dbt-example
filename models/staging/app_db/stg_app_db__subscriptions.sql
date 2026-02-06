@@ -1,60 +1,49 @@
-{{ config(materialized='view') }}
-
-/*
- Subscription staging model
-
- Business rules:
- - Prices stored in cents, convert to dollars
- - Annual plans: divide by 12 to get monthly equivalent
- - Exclude deleted subscriptions
- - Add helpful flags (is_active, is_trial, etc.)
- */
-
 with
-    source as (select
-                   *
-               from
-                   {{ source('app_db', 'subscriptions') }})
-  , renamed as (select
-                    -- IDs
-                    id                                     as subscription_id
-                  , user_id
-                  ,
 
-                    -- Product details
-                    product
-                  , plan_name
-                  , billing_period
-                  ,
+source as (
+    select * from {{ source('app_db', 'subscriptions') }}
+),
 
-                    -- Pricing (convert cents to dollars)
-                    {{ cents_to_dollars('amount_cents') }} as subscription_amount
-                  ,
+renamed as (
+    select
+        id as subscription_id,
+        user_id,
+        plan_id,
+        product,
+        plan_name,
+        billing_period,
+        {{ cents_to_dollars('amount_cents') }} as subscription_amount,
+        {{ cents_to_dollars('discount_cents') }} as discount_amount,
+        lower(status) as subscription_status,
+        quantity,
+        trial_start_date,
+        trial_end_date,
+        current_period_start,
+        current_period_end,
+        cancel_at_period_end,
+        canceled_at,
+        ended_at,
+        stripe_subscription_id,
+        promo_code,
+        payment_method,
+        created_at,
+        updated_at,
+        loaded_at
+    from source
+    where deleted_at is null
+),
 
-                    -- Status
-                    lower(status)                          as subscription_status
-                  ,
-
-                    -- Timestamps
-                    created_at
-                from source
-                where deleted_at is null
-                  ),
-    with_calculated_fields as (
-        select
-            *,
-
-            -- Calculate monthly amount (normalize annual to monthly)
+with_calculated_fields as (
+    select
+        *,
         case
-            when billing_period = 'annual' then subscription_amount / 12
-        else subscription_amount
+            when billing_period = 'annual' then round(subscription_amount / 12, 2)
+            else subscription_amount
         end as monthly_amount,
-
-            -- Helpful boolean flags
         subscription_status in ('active', 'trial', 'past_due') as is_active,
         subscription_status = 'trial' as is_trial,
         subscription_status = 'canceled' as is_canceled
-        from renamed
-    )
+    from renamed
+)
 
 select * from with_calculated_fields

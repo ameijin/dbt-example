@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: Customer dimension combining user, Stripe, and subscription data. One row per customer.
+    columns:
+      - name: customer_key
+        description: Surrogate key
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: Natural key from app_db
+        data_tests:
+          - unique
+          - not_null
+      - name: current_mrr
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100000
+
+  - name: dim_subscriptions
+    description: Subscription dimension enriched with plan catalog details
+    columns:
+      - name: subscription_key
+        description: Surrogate key
+        data_tests:
+          - unique
+          - not_null
+      - name: subscription_id
+        description: Natural key
+        data_tests:
+          - unique
+          - not_null
+      - name: monthly_amount
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 5000
+
+  - name: fct_subscription_events
+    description: Fact table of subscription lifecycle events with MRR impact
+    columns:
+      - name: event_id
+        description: Surrogate key for the event
+        data_tests:
+          - unique
+          - not_null
+      - name: mrr_change
+        data_tests:
+          - not_null
+      - name: event_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['new', 'upgrade', 'downgrade', 'cancel', 'churn', 'reactivate']
+
+  - name: fct_mrr_daily
+    description: >
+      Incremental daily MRR fact table with new/expansion/contraction/churn
+      breakdown per product. Uses merge strategy with unique_key.
+    columns:
+      - name: mrr_daily_id
+        description: Surrogate key (date + product)
+        data_tests:
+          - unique
+          - not_null
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 100
+
+  - name: fct_revenue
+    description: Revenue fact from Stripe charges and invoices
+    columns:
+      - name: revenue_id
+        data_tests:
+          - not_null
+      - name: net_revenue
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 100
+
+unit_tests:
+  - name: test_mrr_calculation_monthly
+    description: Monthly subscriptions should pass through amount unchanged
+    model: dim_subscriptions
+    given:
+      - input: ref('stg_app_db__subscriptions')
+        rows:
+          - {subscription_id: 1, user_id: 1, plan_id: 1, product: 'cloudsync', plan_name: 'starter', billing_period: 'monthly', subscription_amount: 9.99, discount_amount: 0, subscription_status: 'active', quantity: 1, trial_start_date: null, trial_end_date: null, current_period_start: '2024-01-01', current_period_end: '2024-02-01', cancel_at_period_end: false, canceled_at: null, ended_at: null, stripe_subscription_id: 'sub_test1', promo_code: null, payment_method: 'card', created_at: '2024-01-01', updated_at: '2024-01-01', loaded_at: '2024-01-01', monthly_amount: 9.99, is_active: true, is_trial: false, is_canceled: false}
+      - input: ref('plan_catalog')
+        rows:
+          - {plan_id: 1, product: 'cloudsync', plan_name: 'starter', billing_period: 'monthly', monthly_price_cents: 999, annual_price_cents: null, max_users: '5', storage_gb: '10', support_tier: 'email'}
+    expect:
+      rows:
+        - {subscription_id: 1, monthly_amount: 9.99}
+
+  - name: test_mrr_calculation_annual
+    description: Annual subscriptions should be normalized to monthly (divided by 12)
+    model: dim_subscriptions
+    given:
+      - input: ref('stg_app_db__subscriptions')
+        rows:
+          - {subscription_id: 2, user_id: 1, plan_id: 2, product: 'cloudsync', plan_name: 'starter', billing_period: 'annual', subscription_amount: 99.90, discount_amount: 0, subscription_status: 'active', quantity: 1, trial_start_date: null, trial_end_date: null, current_period_start: '2024-01-01', current_period_end: '2025-01-01', cancel_at_period_end: false, canceled_at: null, ended_at: null, stripe_subscription_id: 'sub_test2', promo_code: null, payment_method: 'card', created_at: '2024-01-01', updated_at: '2024-01-01', loaded_at: '2024-01-01', monthly_amount: 8.33, is_active: true, is_trial: false, is_canceled: false}
+      - input: ref('plan_catalog')
+        rows:
+          - {plan_id: 2, product: 'cloudsync', plan_name: 'starter', billing_period: 'annual', monthly_price_cents: null, annual_price_cents: 9990, max_users: '5', storage_gb: '10', support_tier: 'email'}
+    expect:
+      rows:
+        - {subscription_id: 2, monthly_amount: 8.33}

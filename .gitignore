@@ -1,6 +1,18 @@
-
 target/
 dbt_packages/
 logs/
-
 .idea/
+.venv/
+__pycache__/
+
+# DuckDB files
+*.duckdb
+*.duckdb.wal
+
+# Local config (use profiles.yml.example as template)
+profiles.yml
+.user.yml
+package-lock.yml
+
+# Project planning docs
+PRD.md

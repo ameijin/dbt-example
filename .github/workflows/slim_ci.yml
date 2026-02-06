@@ -1,0 +1,64 @@
+name: Slim CI
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  DBT_PROFILES_DIR: .
+
+jobs:
+  dbt-ci:
+    name: dbt build (modified + downstream)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Install dbt packages
+        run: uv run dbt deps
+
+      - name: Generate test data
+        run: uv run python scripts/generate_test_data.py
+
+      - name: Seed reference data
+        run: uv run dbt seed
+
+      - name: Download production manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: dbt-manifest
+          path: prod-artifacts/
+        continue-on-error: true
+
+      - name: dbt build (state-aware)
+        run: |
+          if [ -f prod-artifacts/manifest.json ]; then
+            echo "Running slim CI with state deferral"
+            uv run dbt build --select state:modified+ --defer --state prod-artifacts --fail-fast
+          else
+            echo "No production manifest found, running full build"
+            uv run dbt build --fail-fast
+          fi
+
+      - name: Lint changed SQL files
+        run: |
+          CHANGED_SQL=$(git diff --name-only origin/main...HEAD -- '*.sql' | head -20)
+          if [ -n "$CHANGED_SQL" ]; then
+            echo "Linting changed SQL files:"
+            echo "$CHANGED_SQL"
+            uv run dbt compile
+            echo "$CHANGED_SQL" | xargs uv run sqlfluff lint --dialect duckdb || true
+          else
+            echo "No SQL files changed"
+          fi

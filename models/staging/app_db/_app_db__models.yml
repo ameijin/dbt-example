@@ -20,7 +20,8 @@ models:
         description: Current account status
         data_tests:
           - accepted_values:
-              values: [ 'active', 'inactive', 'churned', 'suspended' ]
+              arguments:
+                values: ['active', 'inactive', 'churned', 'suspended']
 
       - name: is_active_user
         description: Boolean flag for active users
@@ -40,14 +41,34 @@ models:
         data_tests:
           - not_null
           - relationships:
-              to: ref('stg_app_db__users')
-              field: user_id
+              arguments:
+                to: ref('stg_app_db__users')
+                field: user_id
 
       - name: product
         data_tests:
           - accepted_values:
-              values: [ 'cloudsync', 'teamchat', 'datahub' ]
+              arguments:
+                values: ['cloudsync', 'teamchat', 'datahub']
 
       - name: monthly_amount
+        data_tests:
+          - not_null
+
+  - name: stg_app_db__usage_events
+    description: Cleaned product usage events
+
+    columns:
+      - name: event_id
+        description: Primary key
+        data_tests:
+          - unique
+          - not_null
+
+      - name: user_id
+        data_tests:
+          - not_null
+
+      - name: event_type
         data_tests:
           - not_null

@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: dim_campaigns
+    description: Campaign dimension with UTM parameters and channel mapping
+    columns:
+      - name: campaign_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_customer_acquisition
+    description: Customer acquisition fact with channel attribution
+    columns:
+      - name: user_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: rpt_marketing_roi
+    description: Marketing ROI report by channel and campaign

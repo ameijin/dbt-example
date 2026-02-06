@@ -1,6 +1,13 @@
 [project]
-name = "dbt"
+name = "techflow-analytics"
 version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.13"
-dependencies = []
+description = "Production-grade dbt project for TechFlow SaaS analytics"
+requires-python = ">=3.12"
+dependencies = [
+    "dbt-core>=1.9.0,<2.0.0",
+    "dbt-duckdb>=1.9.0,<2.0.0",
+    "faker>=28.0.0",
+    "pyarrow>=17.0.0",
+    "sqlfluff>=3.0.0",
+    "sqlfluff-templater-dbt>=3.0.0",
+]

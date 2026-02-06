@@ -1,0 +1,24 @@
+techflow_analytics:
+  target: dev
+  outputs:
+
+    # DuckDB (default, zero-setup local development)
+    dev:
+      type: duckdb
+      path: dev.duckdb
+      schema: main
+      threads: 4
+
+    # Snowflake (optional, for dbt Cloud comparison)
+    # Requires a Snowflake account — sign up for a free trial at https://signup.snowflake.com/
+    # Copy this file to profiles.yml and fill in your credentials
+    # snowflake:
+    #   type: snowflake
+    #   account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+    #   user: "{{ env_var('SNOWFLAKE_USER') }}"
+    #   password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+    #   role: transformer
+    #   database: techflow_analytics
+    #   warehouse: transforming
+    #   schema: main
+    #   threads: 4

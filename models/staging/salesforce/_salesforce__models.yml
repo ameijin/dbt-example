@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_salesforce__accounts
+    description: Cleaned Salesforce account data
+    columns:
+      - name: account_id
+        data_tests:
+          - unique
+          - not_null
+      - name: account_name
+        data_tests:
+          - not_null
+
+  - name: stg_salesforce__opportunities
+    description: Cleaned Salesforce opportunity data
+    columns:
+      - name: opportunity_id
+        data_tests:
+          - unique
+          - not_null
+      - name: account_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_salesforce__accounts')
+                field: account_id
