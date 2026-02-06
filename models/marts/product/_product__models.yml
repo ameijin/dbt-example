@@ -19,11 +19,44 @@ models:
 
   - name: fct_user_engagement_daily
     description: Daily user engagement metrics per product
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: engagement_id
+        description: Surrogate key (user + product + date)
+        data_type: varchar
         data_tests:
           - unique
           - not_null
+      - name: user_id
+        description: Foreign key to dim_users
+        data_type: bigint
+      - name: product
+        description: Product name
+        data_type: varchar
+      - name: activity_date
+        description: Date of activity
+        data_type: date
+      - name: event_count
+        description: Total events for the day
+        data_type: bigint
+      - name: distinct_event_types
+        description: Number of distinct event types
+        data_type: bigint
+      - name: session_count
+        description: Number of distinct sessions
+        data_type: bigint
+      - name: total_duration_seconds
+        description: Total time spent in seconds
+        data_type: hugeint
 
   - name: rpt_feature_adoption
     description: Feature adoption report by product and plan
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - product
+              - feature_name

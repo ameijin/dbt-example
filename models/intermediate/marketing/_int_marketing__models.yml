@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: int_user_acquisition_channels
+    description: >
+      User-level acquisition channel attribution based on UTM
+      parameters mapped to standardized channel names.
+    columns:
+      - name: user_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: int_campaign_attribution
+    description: >
+      Campaign-level revenue attribution aggregating user acquisitions
+      and subscription MRR by UTM campaign parameters.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - utm_campaign
+              - acquisition_channel
+              - utm_source
+              - utm_medium

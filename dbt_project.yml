@@ -20,6 +20,10 @@ clean-targets:
 vars:
   start_date: '2024-01-01'
   currency: 'USD'
+  dbt_project_evaluator:
+    marts_prefixes: ['fct_', 'dim_', 'rpt_']
+    other_prefixes: []
+    models_fanout_threshold: 8
 
 models:
   techflow_analytics:

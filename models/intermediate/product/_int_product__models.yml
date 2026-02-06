@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: int_user_engagement_daily
+    description: >
+      Daily aggregation of user engagement metrics per product,
+      including event counts, session counts, and total duration.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - user_id
+              - product
+              - activity_date
+
+  - name: int_feature_adoption
+    description: >
+      Per-user feature adoption metrics including first use date,
+      last use date, and total usage count.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - user_id
+              - product
+              - feature_name
+
+  - name: int_usage_cohorts
+    description: >
+      Cohort retention analysis showing active users and retention
+      rates by signup month over time.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - signup_cohort
+              - activity_date

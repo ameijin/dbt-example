@@ -3,73 +3,301 @@ version: 2
 models:
   - name: dim_customers
     description: Customer dimension combining user, Stripe, and subscription data. One row per customer.
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: customer_key
         description: Surrogate key
+        data_type: varchar
         data_tests:
           - unique
           - not_null
       - name: user_id
         description: Natural key from app_db
+        data_type: bigint
         data_tests:
           - unique
           - not_null
+      - name: email
+        description: User email address
+        data_type: varchar
+      - name: first_name
+        description: User first name
+        data_type: varchar
+      - name: last_name
+        description: User last name
+        data_type: varchar
+      - name: full_name
+        description: Full name (first + last)
+        data_type: varchar
+      - name: account_status
+        description: Current account status
+        data_type: varchar
+      - name: account_tier
+        description: Account tier level
+        data_type: varchar
+      - name: company_name
+        description: Company name for B2B customers
+        data_type: varchar
+      - name: company_size
+        description: Company size category
+        data_type: varchar
+      - name: industry
+        description: Customer industry vertical
+        data_type: varchar
+      - name: country_code
+        description: Two-letter country code
+        data_type: varchar
+      - name: signup_source
+        description: Source of initial signup
+        data_type: varchar
+      - name: utm_source
+        description: UTM source parameter at signup
+        data_type: varchar
+      - name: utm_medium
+        description: UTM medium parameter at signup
+        data_type: varchar
+      - name: utm_campaign
+        description: UTM campaign parameter at signup
+        data_type: varchar
+      - name: stripe_customer_id
+        description: Stripe customer identifier
+        data_type: varchar
+      - name: is_stripe_delinquent
+        description: Whether customer has overdue Stripe payments
+        data_type: boolean
+      - name: total_subscriptions
+        description: Total number of subscriptions ever created
+        data_type: bigint
+      - name: active_subscriptions
+        description: Number of currently active subscriptions
+        data_type: bigint
       - name: current_mrr
+        description: Current monthly recurring revenue
+        data_type: double
         data_tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
                 max_value: 100000
+      - name: first_subscription_at
+        description: Date of first subscription
+        data_type: varchar
+      - name: last_subscription_at
+        description: Date of most recent subscription
+        data_type: varchar
+      - name: created_at
+        description: Account creation timestamp
+        data_type: varchar
+      - name: last_login_at
+        description: Most recent login timestamp
+        data_type: varchar
+      - name: is_active_user
+        description: Whether user is currently active
+        data_type: boolean
 
   - name: dim_subscriptions
     description: Subscription dimension enriched with plan catalog details
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: subscription_key
         description: Surrogate key
+        data_type: varchar
         data_tests:
           - unique
           - not_null
       - name: subscription_id
         description: Natural key
+        data_type: bigint
         data_tests:
           - unique
           - not_null
+      - name: user_id
+        description: Foreign key to dim_customers
+        data_type: bigint
+      - name: product
+        description: Product name (cloudsync, teamchat, datahub)
+        data_type: varchar
+      - name: plan_name
+        description: Subscription plan name
+        data_type: varchar
+      - name: billing_period
+        description: Billing period (monthly or annual)
+        data_type: varchar
+      - name: subscription_amount
+        description: Raw subscription amount before normalization
+        data_type: double
+      - name: discount_amount
+        description: Applied discount amount
+        data_type: double
       - name: monthly_amount
+        description: Normalized monthly amount
+        data_type: double
         data_tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
                 max_value: 5000
+      - name: subscription_status
+        description: Current subscription status from source
+        data_type: varchar
+      - name: derived_status
+        description: Derived subscription status based on dates
+        data_type: varchar
+      - name: quantity
+        description: Number of seats/units
+        data_type: bigint
+      - name: stripe_subscription_id
+        description: Stripe subscription identifier
+        data_type: varchar
+      - name: promo_code
+        description: Applied promotional code
+        data_type: varchar
+      - name: payment_method
+        description: Payment method type
+        data_type: varchar
+      - name: trial_start_date
+        description: Trial period start date
+        data_type: varchar
+      - name: trial_end_date
+        description: Trial period end date
+        data_type: varchar
+      - name: current_period_start
+        description: Current billing period start
+        data_type: varchar
+      - name: current_period_end
+        description: Current billing period end
+        data_type: varchar
+      - name: canceled_at
+        description: Cancellation timestamp
+        data_type: varchar
+      - name: ended_at
+        description: Subscription end timestamp
+        data_type: varchar
+      - name: created_at
+        description: Subscription creation timestamp
+        data_type: varchar
+      - name: is_active
+        description: Whether subscription is currently active
+        data_type: boolean
+      - name: is_trial
+        description: Whether subscription is in trial period
+        data_type: boolean
+      - name: is_canceled
+        description: Whether subscription has been canceled
+        data_type: boolean
+      - name: plan_max_users
+        description: Maximum users allowed on plan
+        data_type: varchar
+      - name: plan_storage_gb
+        description: Storage allocation in GB
+        data_type: varchar
+      - name: plan_support_tier
+        description: Support tier included with plan
+        data_type: varchar
 
   - name: fct_subscription_events
     description: Fact table of subscription lifecycle events with MRR impact
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: event_id
         description: Surrogate key for the event
+        data_type: varchar
         data_tests:
           - unique
           - not_null
-      - name: mrr_change
-        data_tests:
-          - not_null
+      - name: subscription_id
+        description: Foreign key to dim_subscriptions
+        data_type: bigint
+      - name: user_id
+        description: Foreign key to dim_customers
+        data_type: bigint
+      - name: product
+        description: Product name
+        data_type: varchar
+      - name: plan_name
+        description: Plan name at time of event
+        data_type: varchar
+      - name: billing_period
+        description: Billing period at time of event
+        data_type: varchar
       - name: event_type
+        description: Type of subscription event
+        data_type: varchar
         data_tests:
           - accepted_values:
               arguments:
                 values: ['new', 'upgrade', 'downgrade', 'cancel', 'churn', 'reactivate']
+      - name: event_date
+        description: Date the event occurred
+        data_type: varchar
+      - name: mrr_amount
+        description: MRR amount after event
+        data_type: double
+      - name: previous_mrr_amount
+        description: MRR amount before event
+        data_type: double
+      - name: mrr_change
+        description: Change in MRR from this event
+        data_type: double
+        data_tests:
+          - not_null
 
   - name: fct_mrr_daily
     description: >
       Incremental daily MRR fact table with new/expansion/contraction/churn
       breakdown per product. Uses merge strategy with unique_key.
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: mrr_daily_id
         description: Surrogate key (date + product)
+        data_type: varchar
         data_tests:
           - unique
           - not_null
+      - name: date_day
+        description: Calendar date
+        data_type: date
+      - name: product
+        description: Product name
+        data_type: varchar
+      - name: new_mrr
+        description: MRR from new subscriptions
+        data_type: double
+      - name: expansion_mrr
+        description: MRR from upgrades
+        data_type: double
+      - name: contraction_mrr
+        description: MRR lost from downgrades
+        data_type: double
+      - name: churned_mrr
+        description: MRR lost from cancellations
+        data_type: double
+      - name: net_mrr_change
+        description: Net change in MRR for the day
+        data_type: double
+      - name: event_count
+        description: Number of subscription events
+        data_type: bigint
+      - name: cumulative_mrr
+        description: Running total MRR up to this date
+        data_type: double
+      - name: loaded_at
+        description: Timestamp when row was loaded
+        data_type: timestamp with time zone
     data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
@@ -77,13 +305,55 @@ models:
 
   - name: fct_revenue
     description: Revenue fact from Stripe charges and invoices
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: revenue_id
+        description: Unique revenue transaction identifier
+        data_type: varchar
         data_tests:
+          - unique
           - not_null
+      - name: revenue_source
+        description: Source of revenue (charge or invoice)
+        data_type: varchar
+      - name: customer_id
+        description: Stripe customer identifier
+        data_type: varchar
+      - name: stripe_subscription_id
+        description: Stripe subscription identifier
+        data_type: varchar
+      - name: product
+        description: Product name
+        data_type: varchar
+      - name: plan_name
+        description: Plan name
+        data_type: varchar
+      - name: revenue_amount
+        description: Gross revenue amount in dollars
+        data_type: double
+      - name: refund_amount
+        description: Refund amount in dollars
+        data_type: double
       - name: net_revenue
+        description: Net revenue after refunds
+        data_type: double
         data_tests:
           - not_null
+      - name: currency
+        description: Currency code
+        data_type: varchar
+      - name: status
+        description: Transaction status
+        data_type: varchar
+      - name: is_paid
+        description: Whether transaction is paid
+        data_type: boolean
+      - name: revenue_date
+        description: Date of revenue transaction
+        data_type: timestamp with time zone
     data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
