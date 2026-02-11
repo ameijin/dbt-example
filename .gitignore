@@ -15,5 +15,5 @@ profiles.yml
 package-lock.yml
 
 # Project planning docs
-PRD.md
-COMPARISON_PLAN.md
+docs/PRD.md
+docs/COMPARISON_PLAN.md
