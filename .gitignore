@@ -9,8 +9,7 @@ __pycache__/
 *.duckdb
 *.duckdb.wal
 
-# Local config (use profiles.yml.example as template)
-profiles.yml
+# Local config
 .user.yml
 package-lock.yml
 
